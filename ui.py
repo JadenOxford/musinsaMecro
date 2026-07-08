@@ -1,4 +1,6 @@
 import tkinter as tk
+from tkinter import ttk
+
 
 class LoginUI:
     def __init__(self, root, login_callback):
@@ -60,4 +62,52 @@ class LoginUI:
             self.login_type.get(),
             self.id_entry.get(),
             self.pw_entry.get()
+        )
+
+class LoginSuccessUI:
+
+    def __init__(self, root, user_name, logout_callback):
+
+        self.root = root
+        self.logout_callback = logout_callback
+
+        self.root.title("Musinsa Macro")
+        self.root.geometry("420x300")
+        self.root.resizable(False, False)
+
+
+        # ================= MESSAGE =================
+        # 유저명 표시
+        tk.Label(root, text=f"{user_name}님", font=("Arial", 13, "bold")
+                ).pack(pady=10)
+
+        # 로그아웃 라벨 표시 
+        logout = tk.Label(root,text="로그아웃",cursor="hand2",font=("Arial", 9, "underline"))
+        logout.pack(pady=5)
+        logout.bind("<Button-1>",lambda e: self.logout_callback())
+
+        info = """
+함께 띄워지는 Chrome의
+무신사 체험단 페이지에서
+다음 단계를 진행해주세요.
+
+
+1. 상품 선택
+
+2. 상품 옵션 선택 및
+   선택완료 버튼 클릭
+
+
+자동으로 신청됩니다.
+"""
+
+
+        tk.Label(
+            root,
+            text=info,
+            justify="left",
+            font=("Arial", 11)
+        ).pack(
+            padx=30,
+            anchor="w"
         )
