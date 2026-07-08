@@ -80,7 +80,12 @@ class App:
             return False
 
     def handle_login(self, login_type, user_id, user_pw):
-        self.bot.go_login_page() 
+        # 카카오 페이지가 아니면 로그인 페이지 이동
+        if not (
+            login_type == "kakao"
+            and "accounts.kakao.com" in self.bot.driver.current_url
+        ):
+            self.bot.go_login_page()
 
         if login_type == "musinsa":
             self.bot.driver.find_element(By.ID, "id").send_keys(user_id)
@@ -88,19 +93,43 @@ class App:
             # self.bot.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
 
         elif login_type == "kakao":
-            kakao_btn = self.bot.driver.find_element(By.XPATH,"//a[contains(., '카카오로 시작하기')]")
-            self.bot.driver.execute_script("arguments[0].click();", kakao_btn)
-
+            if "accounts.kakao.com" not in self.bot.driver.current_url:
+                kakao_btn = self.bot.driver.find_element(By.XPATH,"//a[contains(., '카카오로 시작하기')]")
+                self.bot.driver.execute_script("arguments[0].click();", kakao_btn)
+            
             WebDriverWait(self.bot.driver, 10).until(EC.presence_of_element_located((By.NAME, "loginId")))
 
-            self.bot.driver.find_element(By.NAME, "loginId").send_keys(user_id)
-            self.bot.driver.find_element(By.NAME, "password").send_keys(user_pw)            
+           
+            id_input = self.bot.driver.find_element(By.NAME,"loginId")
 
+            pw_input = self.bot.driver.find_element(By.NAME,"password")
+
+            # 기존 값 제거
+            id_input.clear()
+            pw_input.clear()
+
+            # 값 입력
+            id_input.send_keys(user_id)
+            pw_input.send_keys(user_pw)   
+            
+            # 로그인
+            self.bot.driver.find_element(By.CSS_SELECTOR,"button[type='submit']").click()
+
+            # 로그인 실패 체크
+            try:
+                WebDriverWait(self.bot.driver,3).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".desc_error")))
+               
+                print("카카오 로그인 실패")
+                return
+            except: 
+                pass
+                
         elif login_type == "apple":
             self.bot.driver.find_element(By.XPATH, "//a[contains(text(),'Apple로 시작하기')]").click()
         
         
         self.bot.driver.find_element(By.CSS_SELECTOR,"button[type='submit']").click()
+
 
         try:
             WebDriverWait(self.bot.driver, 10).until(
@@ -146,7 +175,7 @@ class App:
                 self.root,
                 self.handle_login
             )
-            
+
         except Exception as e:
             print("로그아웃 실패:", e)
     # ===============================================
