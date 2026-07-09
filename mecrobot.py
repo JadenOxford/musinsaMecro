@@ -12,26 +12,18 @@ class MusinsaBot:
     # =========================
     # LOG IN 
     # =========================
-    def open_home(self):
-        # self.driver = webdriver.Chrome()
-        options = webdriver.ChromeOptions()
-        options.add_argument(r"--user-data-dir=D:\py\musinsaMecro\chrome_profile")
-        options.add_argument("--profile-directory=Default")
-        self.driver = webdriver.Chrome(options=options)
-        self.driver.get("https://www.musinsa.com/main/musinsa")
-
     def go_login_page(self):
         if self.driver is None:
-            self.open_home()
+            # 무신사 홈
+            options = webdriver.ChromeOptions()
+            options.add_argument(r"--user-data-dir=D:\py\musinsaMecro\chrome_profile")
+            options.add_argument("--profile-directory=Default")
+            self.driver = webdriver.Chrome(options=options)
+            self.driver.get("https://www.musinsa.com/main/musinsa")
 
-        # 이미 카카오 로그인 중이면 이동하지 않음
-        print(self.driver.current_url)
-        if "accounts.kakao.com" in self.driver.current_url:
-            return
-
-        login_btn = self.driver.find_element(By.CSS_SELECTOR, "a[href*='login']")
-        login_btn.click()
-        time.sleep(2)
+            login_btn = self.driver.find_element(By.CSS_SELECTOR, "a[href*='login']")
+            login_btn.click()
+            time.sleep(2)
 
     def get_user_name(self):
         try:

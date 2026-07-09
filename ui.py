@@ -83,7 +83,7 @@ class LoginSuccessUI:
 
         # 로그아웃 라벨 표시 
         logout = tk.Label(root,text="로그아웃",cursor="hand2",font=("Arial", 9, "underline"))
-        logout.pack(pady=5)
+        logout.pack(pady=10)
         logout.bind("<Button-1>",lambda e: self.logout_callback())
 
         info = """

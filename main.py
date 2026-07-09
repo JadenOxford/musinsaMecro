@@ -7,6 +7,8 @@ from mecrobot import MusinsaBot
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import platform
+from selenium.webdriver.common.keys import Keys
 import threading
 
 
@@ -22,20 +24,23 @@ class App:
         login_info = self.load_loginInfo()
 
         if login_info:
+            
             # 저장된 로그인 정보가 있으면 자동 로그인
-            self.handle_login(
+            self.process(
                 login_info["login_type"],
                 login_info["user_id"],
                 login_info["user_pw"]
             )
         else:
             # 없으면 로그인 UI 표시
-            self.ui = LoginUI(self.root, self.handle_login)
-
-        threading.Thread(target=self.watch_apply_page, daemon=True).start()
+            self.ui = LoginUI(self.root, self.process)
 
         self.root.mainloop()
 
+    def process(self, login_type, user_id, user_pw):
+        if self.handle_login(login_type, user_id, user_pw):
+            threading.Thread(target=self.watch_apply_page,daemon=True).start()
+        
     # ================= LOGIN FLOW =================
     def save_loginInfo(self, login_type, user_id, user_pw):
         data = {"login_type": login_type, "user_id": user_id, "user_pw": user_pw}
@@ -75,17 +80,13 @@ class App:
             # # 로그인 버튼이 있으면 아직 로그인 안 됨
             # self.bot.driver.find_element(By.CSS_SELECTOR,"a[href*='login']")
             # return False
-        except:
+        except Exception as e:
+            print(e)
             # return True
             return False
 
     def handle_login(self, login_type, user_id, user_pw):
-        # 카카오 페이지가 아니면 로그인 페이지 이동
-        if not (
-            login_type == "kakao"
-            and "accounts.kakao.com" in self.bot.driver.current_url
-        ):
-            self.bot.go_login_page()
+        self.bot.go_login_page()
 
         if login_type == "musinsa":
             self.bot.driver.find_element(By.ID, "id").send_keys(user_id)
@@ -93,53 +94,46 @@ class App:
             # self.bot.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
 
         elif login_type == "kakao":
-            if "accounts.kakao.com" not in self.bot.driver.current_url:
+            if "accounts.kakao.com/login" not in self.bot.driver.current_url:
                 kakao_btn = self.bot.driver.find_element(By.XPATH,"//a[contains(., '카카오로 시작하기')]")
                 self.bot.driver.execute_script("arguments[0].click();", kakao_btn)
-            
-            WebDriverWait(self.bot.driver, 10).until(EC.presence_of_element_located((By.NAME, "loginId")))
 
-           
-            id_input = self.bot.driver.find_element(By.NAME,"loginId")
-
-            pw_input = self.bot.driver.find_element(By.NAME,"password")
-
-            # 기존 값 제거
-            id_input.clear()
-            pw_input.clear()
-
-            # 값 입력
-            id_input.send_keys(user_id)
-            pw_input.send_keys(user_pw)   
-            
-            # 로그인
-            self.bot.driver.find_element(By.CSS_SELECTOR,"button[type='submit']").click()
-
-            # 로그인 실패 체크
-            try:
-                WebDriverWait(self.bot.driver,3).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".desc_error")))
-               
-                print("카카오 로그인 실패")
-                return
-            except: 
-                pass
                 
         elif login_type == "apple":
             self.bot.driver.find_element(By.XPATH, "//a[contains(text(),'Apple로 시작하기')]").click()
+
+        id_input = self.bot.driver.find_element(By.NAME,"loginId")
+
+        pw_input = self.bot.driver.find_element(By.NAME,"password")
+
+        # 기존 값 제거 시 clear 함수 적용 안됨 이슈로 command + a, control + a 사용
+        modifier = Keys.COMMAND if platform.system() == "Darwin" else Keys.CONTROL
+        # 기존 값 제거
+        id_input.click()
+        id_input.send_keys(modifier, "a")
+        id_input.send_keys(Keys.DELETE)
+
+        pw_input.click()
+        pw_input.send_keys(modifier, "a")
+        pw_input.send_keys(Keys.DELETE)
+
+        # 값 입력
+        id_input.send_keys(user_id)
+        pw_input.send_keys(user_pw)   
         
-        
+        # 로그인
         self.bot.driver.find_element(By.CSS_SELECTOR,"button[type='submit']").click()
 
-
+        # 로그인 성공/실패 체크
         try:
-            WebDriverWait(self.bot.driver, 10).until(
-                lambda d: self.is_login_success()
-            )
-            print("로그인 성공")
+            WebDriverWait(self.bot.driver, 10).until(lambda d: self.is_login_success())
 
             # 로그인 정보 json에 저장
             self.save_loginInfo(login_type, user_id, user_pw)
-            
+            print("로그인 성공")
+            print("driver =", self.bot.driver)
+            print("session =", self.bot.driver.session_id)
+
             # 로그인 유저명 가져오기 
             user_name = self.bot.get_user_name()
 
@@ -147,8 +141,13 @@ class App:
 
             # 유저명을 파라미터로 ui 띄우기 
             self.open_success_window(user_name)
-        except:
+
+            return True
+            
+        except Exception as e:
+            print(e)
             print("로그인 실패")
+            return False
 
     def open_success_window(self, user_name):
         for widget in self.root.winfo_children():
@@ -184,20 +183,28 @@ class App:
 
     # ================= AUTO 체험단  =================
     def watch_apply_page(self):
+        print("watch 시작")
+
         while self.bot.driver is None:
             time.sleep(0.5)
 
+        print("driver =", self.bot.driver)
+        print("session =", self.bot.driver.session_id)
+        
         last_handles = set(self.bot.driver.window_handles)
-
+        print("1")
         while True:
             try:
+                print("2")
                 current_handles = set(self.bot.driver.window_handles)
 
                 # 새 창이 생겼는지 확인
                 new_handles = current_handles - last_handles
-
+                print("3")
                 if new_handles:
+                    print("4")
                     for handle in new_handles:
+                        print("5")
                         self.bot.driver.switch_to.window(handle)
 
                         if "preuser/apply/" in self.bot.driver.current_url:
@@ -206,7 +213,7 @@ class App:
 
                 last_handles = current_handles
                 time.sleep(0.2)
-
+                print("6")
             except Exception as e:
                 print(e)
                 time.sleep(1)
