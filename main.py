@@ -18,6 +18,8 @@ class App:
     def __init__(self):
         self.root = tk.Tk()
 
+        self.root.protocol("WM_DELETE_WINDOW",self.close_all)
+
         # selenium bot
         self.bot = MusinsaBot()
 
@@ -183,40 +185,77 @@ class App:
 
     # ================= AUTO 체험단  =================
     def watch_apply_page(self):
-        print("watch 시작")
-
         while self.bot.driver is None:
             time.sleep(0.5)
 
-        print("driver =", self.bot.driver)
-        print("session =", self.bot.driver.session_id)
-        
         last_handles = set(self.bot.driver.window_handles)
-        print("1")
+
         while True:
             try:
-                print("2")
                 current_handles = set(self.bot.driver.window_handles)
 
-                # 새 창이 생겼는지 확인
                 new_handles = current_handles - last_handles
-                print("3")
+            
                 if new_handles:
-                    print("4")
-                    for handle in new_handles:
-                        print("5")
-                        self.bot.driver.switch_to.window(handle)
+                    handle = next(iter(new_handles))   # 새 창 하나
+                    self.bot.driver.switch_to.window(handle)
+                
+                     # 상품 상세 페이지에서 신청하기 한 번만 클릭
+                    try:
+                        select_option_btn = self.bot.driver.find_element(By.XPATH,"//button[contains(., '신청')]")
 
-                        if "preuser/apply/" in self.bot.driver.current_url:
+                        select_option_btn_text = select_option_btn.text.strip()
+
+                        if select_option_btn_text == "신청 완료":
+                            print("이미 신청 완료")
+
+                        elif select_option_btn_text == "신청하기":
+                            print("신청 가능")
+                            self.bot.driver.execute_script("arguments[0].click();",select_option_btn)
+                    except Exception as e:
+                        print("신청하기 버튼 클릭 실패", e)
+
+                    while True:
+                        # 수동으로 창이 닫혔다면 종료
+                        if handle not in self.bot.driver.window_handles:
+                            print("상품 창이 수동으로 닫힘")
+                            last_handles = current_handles
+                            break
+
+                        url = self.bot.driver.current_url
+
+                        if url and "preuser/apply/" in url:
                             print("apply 창 감지")
                             self.bot.complete_apply()
+                            break
+
+                        time.sleep(1)
 
                 last_handles = current_handles
-                time.sleep(0.2)
-                print("6")
+                
             except Exception as e:
                 print(e)
                 time.sleep(1)
+    # ===============================================
+
+    # ================= 종료 =================
+    def close_all(self):
+        print("전체 종료")
+
+        # # Selenium Chrome 종료
+        # try:
+        #     if self.bot.driver:
+        #         self.bot.driver.quit()
+        #         self.bot.driver = None
+        # except Exception as e:
+        #     print("Chrome 종료 오류:", e)
+
+        # Tkinter 종료
+        try:
+            self.root.destroy()
+        except Exception as e:
+            print("UI 종료 오류:", e)
+
     # ===============================================
 
         

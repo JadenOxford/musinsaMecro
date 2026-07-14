@@ -56,6 +56,9 @@ class LoginUI:
             command=self.on_login_click
         ).pack(fill="x", pady=5)
 
+        # Enter 키 누르면 로그인
+        self.root.bind("<Return>", lambda event: self.on_login_click())
+
     # ================= UI EVENT =================
     def on_login_click(self):
         self.login_callback(
@@ -75,6 +78,8 @@ class LoginSuccessUI:
         self.root.geometry("420x300")
         self.root.resizable(False, False)
 
+        # 로그인 성공
+        self.root.unbind("<Return>")
 
         # ================= MESSAGE =================
         # 유저명 표시

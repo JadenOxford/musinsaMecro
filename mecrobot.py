@@ -18,6 +18,7 @@ class MusinsaBot:
             options = webdriver.ChromeOptions()
             options.add_argument(r"--user-data-dir=D:\py\musinsaMecro\chrome_profile")
             options.add_argument("--profile-directory=Default")
+
             self.driver = webdriver.Chrome(options=options)
             self.driver.get("https://www.musinsa.com/main/musinsa")
 
@@ -67,44 +68,46 @@ class MusinsaBot:
     def complete_apply(self):
         driver = self.driver
 
-        # print("apply 감지 시작")
-        while True:
-            print(driver.current_url)
-            time.sleep(1)
-            try:
-                # 새 창이 열렸으면 마지막 창으로 이동
-                if len(driver.window_handles) > 1:
-                    driver.switch_to.window(driver.window_handles[-1])
+        # # print("apply 감지 시작")
+        # while True:
+        #     print(driver.current_url)
+        #     time.sleep(1)
+        #     try:
+        #         # 새 창이 열렸으면 마지막 창으로 이동
+        #         if len(driver.window_handles) > 1:
+        #             driver.switch_to.window(driver.window_handles[-1])
 
-                # 새 창으로 event페이지가 열리고 event페이지에서 신청하기를 누르면 apply 페이지가 된다
-                if "preuser/apply/" in driver.current_url: 
-                    # print("apply 페이지 발견")
+        #         # 새 창으로 event페이지가 열리고 event페이지에서 선택 완료 를 누르면 apply 페이지가 된다
+        #         if "preuser/apply/" in driver.current_url: 
+        #             # print("apply 페이지 발견")
 
-                    # 전체 동의하기 클릭
-                    agree = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "all")))
-                    if agree.get_attribute("aria-checked") == "false": # 체크가 안되어 있을 때에만 체크해라 
-                        driver.execute_script("arguments[0].click();", agree)
+        # 전체 동의하기 클릭
+        agree = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "all")))
+        if agree.get_attribute("aria-checked") == "false": # 체크가 안되어 있을 때에만 체크해라 
+            driver.execute_script("arguments[0].click();", agree)
 
-                    # print("전체 동의 완료")
+        # print("전체 동의 완료")
 
-                    # 신청 완료 버튼 클릭
-                    apply_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH,"//button[.//span[contains(., '신청 완료')]]")))
-                    driver.execute_script("arguments[0].click();", apply_btn)
+        # 신청 완료 버튼 클릭
+        apply_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH,"//button[.//span[contains(., '신청 완료')]]")))
+        driver.execute_script("arguments[0].click();", apply_btn)
 
-                    # print("신청 완료")
+        # print("신청 완료")
 
-                    # 보러가기 버튼이 생길 때까지 기다렸다가 (팝업으로 생성됨) 생기면 클릭
-                    browse_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH,"//button[contains(., '보러가기')]")))
-                    driver.execute_script("arguments[0].click();", browse_btn)
+        # 보러가기 버튼이 생길 때까지 기다렸다가 (팝업으로 생성됨) 생기면 클릭
+        browse_btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH,"//button[contains(., '보러가기')]")))
+        driver.execute_script("arguments[0].click();", browse_btn)
 
-                    # print("보러가기 완료")
+        # print("보러가기 완료")
 
-                    # 새창에서 다시 새창이 사라지며 원래 페이지로 돌아가도록 함
-                    WebDriverWait(driver, 10).until(lambda d: len(d.window_handles) == 1)
-                    driver.switch_to.window(driver.window_handles[0])
+        # 새창에서 다시 새창이 사라지며 원래 페이지로 돌아가도록 함
+        WebDriverWait(driver, 10).until(lambda d: len(d.window_handles) == 1)
+        driver.switch_to.window(driver.window_handles[0])
 
-            except Exception as e:
-                print(e)
+        # return;
 
-            time.sleep(0.2)
+            # except Exception as e:
+            #     print(e)
+
+            # time.sleep(0.2)
     
